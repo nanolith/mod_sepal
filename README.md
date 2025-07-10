@@ -13,7 +13,7 @@ capsicum on FreeBSD.
 
 This module provides a control device, `/dev/sepal_policy`, which can be used to
 control the policy for the given process. Policies can be implemented globally
-or per-descriptor. The common design is to make global policy highly
+or per-descriptor. A common usage pattern is to make global policy highly
 restrictive, then add back special rules for individual descriptors.
 
 `mod_sepal` is a work in progress at this point, and is not ready for production
