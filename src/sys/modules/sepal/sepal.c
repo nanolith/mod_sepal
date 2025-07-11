@@ -10,7 +10,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY JUSTIN HANDVILLE AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
@@ -91,7 +91,7 @@ sepal_decr_devrefcnt()
 
 int
 sepal_open(dev_t self __unused, int flag __unused, int mode __unused,
-	struct lwp *l __unused)
+    struct lwp *l __unused)
 {
 	sepal_incr_devrefcnt();
 
@@ -100,7 +100,7 @@ sepal_open(dev_t self __unused, int flag __unused, int mode __unused,
 
 int
 sepal_close(dev_t self __unused, int flag __unused, int mode __unused,
-	struct lwp *l __unused)
+    struct lwp *l __unused)
 {
 	sepal_decr_devrefcnt();
 
@@ -109,14 +109,13 @@ sepal_close(dev_t self __unused, int flag __unused, int mode __unused,
 
 int
 sepal_ioctl(dev_t self __unused, u_long cmd, void *data, int flag,
-	struct lwp *l __unused)
+    struct lwp *l __unused)
 {
-	switch(cmd) {
+	switch (cmd) {
 	default:
 		return ENOTTY;
 	}
 }
-
 MODULE(MODULE_CLASS_MISC, sepal, NULL);
 
 static int
