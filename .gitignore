@@ -1,0 +1,9 @@
+.*.swp
+amd64
+i386
+xen
+machine
+x86
+*.o
+*.kmod
+*.map
