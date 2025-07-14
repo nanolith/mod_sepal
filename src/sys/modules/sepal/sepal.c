@@ -24,6 +24,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <secmodel/secmodel.h>
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/device.h>
@@ -58,7 +59,11 @@ struct sepal_softc {
 	int procrefcnt;
 };
 
+static const char *sepal_sm_id = "farm.danger.mod_sepal";
+static const char *sepal_sm_name = "mod_sepal sandbox";
+
 static struct sepal_softc sc;
+static secmodel_t sepal_sm;
 
 static int
 sepal_has_refcnts()
@@ -118,7 +123,6 @@ sepal_ioctl(dev_t self __unused, u_long cmd, void *data, int flag,
 		return ENOTTY;
 	}
 }
-
 /* TODO - replace major with a statically defined value in the kernel. */
 static int cmajor = 400;
 static int bmajor = -1;
@@ -128,11 +132,18 @@ sepal_mod_init()
 {
 	int retval;
 
+	/* register the security model. */
+	retval = secmodel_register(&sepal_sm, sepal_sm_id, sepal_sm_name, NULL, NULL, NULL);
+	if (0 != retval) {
+		retval = ENXIO;
+		goto done;
+	}
+
 	/* attach the sepal device. */
 	retval = devsw_attach("sepal", NULL, &bmajor, &sepal_cdevsw, &cmajor);
 	if (0 != retval) {
 		retval = ENXIO;
-		goto done;
+		goto deregister_secmodel;
 	}
 
 	/* set up global module structure. */
@@ -142,6 +153,9 @@ sepal_mod_init()
 	/* success. */
 	retval = 0;
 	goto done;
+
+deregister_secmodel:
+	secmodel_deregister(sepal_sm);
 
 done:
 	return retval;
@@ -156,8 +170,9 @@ sepal_mod_fini()
 		retval = EBUSY;
 		goto done;
 	}
-	mutex_destroy(&sc.lock);
+	secmodel_deregister(sepal_sm);
 	devsw_detach(NULL, &sepal_cdevsw);
+	mutex_destroy(&sc.lock);
 
 	/* success. */
 	retval = 0;
