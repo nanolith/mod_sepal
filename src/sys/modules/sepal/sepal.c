@@ -57,7 +57,7 @@ static struct cdevsw sepal_cdevsw = {
 struct sepal_softc {
 	kmutex_t lock;
 	int devrefcnt;
-	int procrefcnt;
+	int credrefcnt;
 };
 
 static const char *sepal_sm_id = "farm.danger.mod_sepal";
@@ -75,8 +75,8 @@ sepal_has_refcnts()
 	mutex_enter(&sc.lock);
 	/* open device count. */
 	retval |= sc.devrefcnt;
-	/* policy monitored process count. */
-	retval |= sc.procrefcnt;
+	/* policy monitored credential count. */
+	retval |= sc.credrefcnt;
 	mutex_exit(&sc.lock);
 
 	return retval;
