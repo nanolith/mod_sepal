@@ -118,27 +118,72 @@ sepal_ioctl(dev_t self __unused, u_long cmd, void *data, int flag,
 }
 MODULE(MODULE_CLASS_MISC, sepal, NULL);
 
+/* TODO - replace major with a statically defined value in the kernel. */
+static int cmajor = 400;
+static int bmajor = -1;
+
+static int
+sepal_mod_init()
+{
+	int retval;
+
+	/* attach the sepal device. */
+	retval = devsw_attach("sepal", NULL, &bmajor, &sepal_cdevsw, &cmajor);
+	if (0 != retval) {
+		retval = ENXIO;
+		goto done;
+	}
+
+	/* set up global module structure. */
+	memset(&sc, 0, sizeof(sc));
+	mutex_init(&sc.lock, MUTEX_DEFAULT, IPL_NONE);
+
+	/* success. */
+	retval = 0;
+	goto done;
+
+done:
+	return retval;
+}
+
+static int
+sepal_mod_fini()
+{
+	int retval;
+
+	if (0 != sepal_has_refcnts()) {
+		retval = EBUSY;
+		goto done;
+	}
+	mutex_destroy(&sc.lock);
+	devsw_detach(NULL, &sepal_cdevsw);
+
+	/* success. */
+	retval = 0;
+	goto done;
+
+done:
+	return retval;
+}
+
 static int
 sepal_modcmd(modcmd_t cmd, void *arg __unused)
 {
-	//TODO - replace major with a statically defined value in the kernel.
-	int cmajor = 400, bmajor = -1;
+	int retval;
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		if (devsw_attach("sepal", NULL, &bmajor, &sepal_cdevsw, &cmajor))
-			return ENXIO;
+		retval = sepal_mod_init();
+		if (0 != retval)
+			return retval;
 
-		memset(&sc, 0, sizeof(sc));
-		mutex_init(&sc.lock, MUTEX_DEFAULT, IPL_NONE);
 		return 0;
 
 	case MODULE_CMD_FINI:
-		if (sepal_has_refcnts() > 0)
-			return EBUSY;
+		retval = sepal_mod_fini();
+		if (0 != retval)
+			return retval;
 
-		mutex_destroy(&sc.lock);
-		devsw_detach(NULL, &sepal_cdevsw);
 		return 0;
 
 	default:
