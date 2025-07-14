@@ -31,6 +31,8 @@
 #include <sys/module.h>
 #include <sys/mutex.h>
 
+MODULE(MODULE_CLASS_SECMODEL, sepal, NULL);
+
 dev_type_open(sepal_open);
 dev_type_close(sepal_close);
 dev_type_ioctl(sepal_ioctl);
@@ -116,7 +118,6 @@ sepal_ioctl(dev_t self __unused, u_long cmd, void *data, int flag,
 		return ENOTTY;
 	}
 }
-MODULE(MODULE_CLASS_MISC, sepal, NULL);
 
 /* TODO - replace major with a statically defined value in the kernel. */
 static int cmajor = 400;
