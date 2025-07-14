@@ -28,6 +28,7 @@
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/device.h>
+#include <sys/kauth.h>
 #include <sys/kernel.h>
 #include <sys/module.h>
 #include <sys/mutex.h>
@@ -64,6 +65,7 @@ static const char *sepal_sm_name = "mod_sepal sandbox";
 
 static struct sepal_softc sc;
 static secmodel_t sepal_sm;
+static kauth_key_t sepal_key;
 
 static int
 sepal_has_refcnts()
@@ -143,16 +145,26 @@ sepal_mod_init()
 		goto cleanup_mutex;
 	}
 
-	/* attach the sepal device. */
-	retval = devsw_attach("sepal", NULL, &bmajor, &sepal_cdevsw, &cmajor);
+	/* register kauth key. */
+	retval = kauth_register_key(sepal_sm, &sepal_key);
 	if (0 != retval) {
 		retval = ENXIO;
 		goto deregister_secmodel;
 	}
 
+	/* attach the sepal device. */
+	retval = devsw_attach("sepal", NULL, &bmajor, &sepal_cdevsw, &cmajor);
+	if (0 != retval) {
+		retval = ENXIO;
+		goto deregister_key;
+	}
+
 	/* success. */
 	retval = 0;
 	goto done;
+
+deregister_key:
+	kauth_deregister_key(sepal_key);
 
 deregister_secmodel:
 	secmodel_deregister(sepal_sm);
@@ -173,6 +185,7 @@ sepal_mod_fini()
 		retval = EBUSY;
 		goto done;
 	}
+	kauth_deregister_key(sepal_key);
 	secmodel_deregister(sepal_sm);
 	devsw_detach(NULL, &sepal_cdevsw);
 	mutex_destroy(&sc.lock);
