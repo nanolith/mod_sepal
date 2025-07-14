@@ -132,11 +132,15 @@ sepal_mod_init()
 {
 	int retval;
 
+	/* set up global module structure. */
+	memset(&sc, 0, sizeof(sc));
+	mutex_init(&sc.lock, MUTEX_DEFAULT, IPL_NONE);
+
 	/* register the security model. */
 	retval = secmodel_register(&sepal_sm, sepal_sm_id, sepal_sm_name, NULL, NULL, NULL);
 	if (0 != retval) {
 		retval = ENXIO;
-		goto done;
+		goto cleanup_mutex;
 	}
 
 	/* attach the sepal device. */
@@ -146,16 +150,15 @@ sepal_mod_init()
 		goto deregister_secmodel;
 	}
 
-	/* set up global module structure. */
-	memset(&sc, 0, sizeof(sc));
-	mutex_init(&sc.lock, MUTEX_DEFAULT, IPL_NONE);
-
 	/* success. */
 	retval = 0;
 	goto done;
 
 deregister_secmodel:
 	secmodel_deregister(sepal_sm);
+
+cleanup_mutex:
+	mutex_destroy(&sc.lock);
 
 done:
 	return retval;
