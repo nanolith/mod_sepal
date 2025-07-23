@@ -125,6 +125,7 @@ sepal_ioctl(dev_t self __unused, u_long cmd, void *data, int flag,
 		return ENOTTY;
 	}
 }
+
 /* TODO - replace major with a statically defined value in the kernel. */
 static int cmajor = 400;
 static int bmajor = -1;
